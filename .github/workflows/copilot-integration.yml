@@ -1,0 +1,165 @@
+name: GitHub Copilot and AI Integration
+
+on:
+  issues:
+    types: [opened, labeled]
+  pull_request:
+    types: [opened, synchronize, ready_for_review]
+  push:
+    branches: [ main ]
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
+jobs:
+  copilot-suggestions:
+    if: github.event_name == 'issues' && contains(github.event.issue.labels.*.name, 'enhancement')
+    runs-on: ubuntu-latest
+    steps:
+      - name: GitHub Copilot Code Suggestion
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issue = context.payload.issue;
+            const suggestions = `
+            🤖 **GitHub Copilot Suggestions for Enhancement**
+            
+            Based on the issue "${issue.title}", here are some automated suggestions:
+            
+            ## 📋 Development Checklist
+            - [ ] Create feature branch: \`git checkout -b feature/${issue.number}-${issue.title.toLowerCase().replace(/\s+/g, '-')}\`
+            - [ ] Write unit tests following the project's testing guidelines
+            - [ ] Update TypeScript interfaces if data structures change
+            - [ ] Add accessibility attributes (ARIA labels, roles)
+            - [ ] Test with reduced motion preferences
+            - [ ] Verify bundle size impact (\`npm run analyze\`)
+            - [ ] Update documentation if needed
+            
+            ## 🔧 Recommended Approach
+            1. **Analyze existing patterns** in \`src/\` for similar functionality
+            2. **Use light-motion.tsx** instead of framer-motion for animations
+            3. **Follow phosphor-icons** for consistent iconography
+            4. **Maintain SSG compatibility** for GitHub Pages deployment
+            
+            ## 🎯 Code Quality Standards
+            - ESLint passing: \`npm run lint\`
+            - Tests passing: \`npm test\`
+            - Build successful: \`npm run build\`
+            - Accessibility: Use semantic HTML and ARIA attributes
+            
+            *This suggestion was generated automatically by GitHub Copilot integration.*
+            `;
+            
+            github.rest.issues.createComment({
+              issue_number: issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: suggestions
+            });
+
+  pr-analysis:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          
+      - name: Install dependencies
+        run: npm ci
+        
+      - name: Run bundle analysis
+        run: npm run analyze
+        
+      - name: PR Bundle Analysis
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            let analysisComment = `
+            ## 📊 Bundle Analysis Results
+            
+            ✅ **Bundle analysis completed successfully**
+            
+            ### Key Metrics
+            - Bundle built and analyzed
+            - Check the workflow artifacts for detailed size analysis
+            - Verify no significant size increases
+            
+            ### Optimization Reminders
+            - 🎯 Current optimizations: Light Motion, Phosphor Icons, Reduced Dependencies
+            - 📦 Target: Keep total bundle under previous 870kB baseline
+            - ⚡ GitHub Pages compatible build available
+            
+            *Bundle details available in workflow artifacts*
+            `;
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: analysisComment
+            });
+
+  code-quality-check:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          
+      - name: Install dependencies
+        run: npm ci
+        
+      - name: Quality Gate
+        run: npm run quality
+        
+      - name: Create Quality Report Issue
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const title = `🚨 Quality Gate Failed - ${new Date().toISOString().split('T')[0]}`;
+            const body = `
+            ## Quality Gate Failure Report
+            
+            The automated quality checks have failed on the main branch.
+            
+            ### Failed Checks
+            This could include:
+            - ❌ Linting errors
+            - ❌ Test failures  
+            - ❌ Security vulnerabilities
+            - ❌ Build failures
+            
+            ### Action Required
+            1. Review the failed workflow run
+            2. Fix the identified issues
+            3. Push fixes to main branch
+            
+            ### Workflow Run
+            [View Failed Run](${context.payload.repository.html_url}/actions/runs/${context.runId})
+            
+            *This issue was created automatically by the quality gate system.*
+            `;
+            
+            github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: title,
+              body: body,
+              labels: ['bug', 'quality-gate', 'urgent']
+            });

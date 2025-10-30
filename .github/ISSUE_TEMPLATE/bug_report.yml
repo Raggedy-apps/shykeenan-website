@@ -1,0 +1,106 @@
+name: 🐛 Bug Report
+description: Report a bug in the Shy Keenan Memorial Archive
+title: "[BUG] "
+labels: ["bug", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for reporting a bug! This helps us improve the memorial archive.
+        
+  - type: textarea
+    id: bug-description
+    attributes:
+      label: Bug Description
+      description: What happened? What did you expect to happen?
+      placeholder: Describe the bug clearly...
+    validations:
+      required: true
+      
+  - type: textarea
+    id: steps-to-reproduce
+    attributes:
+      label: Steps to Reproduce
+      description: How can we reproduce this issue?
+      placeholder: |
+        1. Go to '...'
+        2. Click on '...'
+        3. Scroll down to '...'
+        4. See error
+    validations:
+      required: true
+      
+  - type: dropdown
+    id: deployment-environment
+    attributes:
+      label: Where did you encounter this bug?
+      description: Which deployment of the site?
+      options:
+        - GitHub Pages (development)
+        - Production site (shykeenan.uk)
+        - Local development
+        - Both deployments
+    validations:
+      required: true
+      
+  - type: dropdown
+    id: browsers
+    attributes:
+      label: Browser
+      description: What browser are you using?
+      options:
+        - Chrome
+        - Firefox
+        - Safari
+        - Edge
+        - Mobile Safari (iOS)
+        - Mobile Chrome (Android)
+        - Other (please specify)
+    validations:
+      required: true
+      
+  - type: checkboxes
+    id: device-type
+    attributes:
+      label: Device Type
+      options:
+        - label: Desktop/Laptop
+        - label: Mobile Phone
+        - label: Tablet
+        - label: Screen Reader
+        - label: Keyboard-only navigation
+        
+  - type: textarea
+    id: error-messages
+    attributes:
+      label: Error Messages
+      description: Any error messages or console logs?
+      render: text
+      placeholder: Paste any error messages here...
+      
+  - type: dropdown
+    id: impact-level
+    attributes:
+      label: Impact Level
+      description: How severe is this bug?
+      options:
+        - Minor - Small visual issue
+        - Moderate - Affects some functionality
+        - Major - Breaks important features
+        - Critical - Site unusable or accessibility barrier
+    validations:
+      required: true
+      
+  - type: checkboxes
+    id: affected-areas
+    attributes:
+      label: Affected Areas (Select all that apply)
+      options:
+        - label: 📅 Timeline/Phoenix components
+        - label: 💭 Memorial/Stories section
+        - label: 🧭 Navigation/Menu
+        - label: 🎨 Styling/Layout
+        - label: 📱 Mobile responsiveness
+        - label: ♿ Accessibility features
+        - label: ⚡ Performance/Loading
+        - label: 🔧 Admin/Authentication

@@ -1,0 +1,6 @@
+/* Neon theme placeholder */
+.neon {
+  --neon: #6ee7ff;
+  --accent: #b39dfc;
+}
+.neon .glow { text-shadow: 0 0 10px var(--neon), 0 0 20px var(--neon); }

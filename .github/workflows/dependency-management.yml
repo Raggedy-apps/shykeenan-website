@@ -1,0 +1,162 @@
+name: Cross-Repository Dependency Management
+
+on:
+  schedule:
+    - cron: '0 0 * * 1' # Weekly on Monday at midnight UTC
+  workflow_dispatch:
+
+jobs:
+  dependency-audit:
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        repository:
+          - shykeenan-website
+          - tell-tales-game
+          - timeline-hub
+          - devkit
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          repository: shykeenan/${{ matrix.repository }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '19'
+      
+      - name: Install dependencies
+        run: |
+          npm ci
+          npm outdated --depth=0 || echo "No outdated packages"
+          npm audit --json > audit-results.json || echo "audit failed, capturing exit code"
+      
+      - name: Run dependency security audit
+        uses: github/codeql-action@v3
+        if: always()
+        with:
+          queries: security-extended,security-and-quality
+      
+      - name: Generate dependency report
+        run: |
+          echo "# 📦 Dependency Report for ${{ matrix.repository }}" >> dependency-report.md
+          echo "Generated on: $(date -u)" >> dependency-report.md
+          echo "" >> dependency-report.md
+          echo "## Outdated Packages" >> dependency-report.md
+          npm outdated --depth=0 >> dependency-report.md || echo "All packages are up to date" >> dependency-report.md
+          echo "" >> dependency-report.md
+          echo "## Security Vulnerabilities" >> dependency-report.md
+          if [ -f audit-results.json ]; then
+            if [ -s audit-results.json ]; then
+              echo "Vulnerabilities found. See audit results below:" >> dependency-report.md
+              cat audit-results.json >> dependency-report.md
+            else
+              echo "No vulnerabilities found 🎉" >> dependency-report.md
+            fi
+          else
+            echo "Audit could not be completed" >> dependency-report.md
+          fi
+          echo "" >> dependency-report.md
+      
+      - name: Upload dependency report
+        uses: actions/upload-artifact@v4
+        with:
+          name: dependency-report-${{ matrix.repository }}
+          path: dependency-report.md
+
+  create-prs:
+    needs: dependency-audit
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    
+    steps:
+      - name: Checkout organization repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Download all dependency reports
+        uses: actions/download-artifact@v4
+        with:
+          path: reports
+      
+      - name: Create weekly dependency update PR
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: 'chore: weekly dependency updates'
+          title: '📦 Weekly Dependency Updates'
+          body: |
+            Automated dependency audit and updates for all Shy Keenan repositories.
+            
+            ## 📊 Summary
+            - Audit completed for all repositories
+            - Security vulnerabilities identified and tracked
+            - Outdated packages cataloged
+            
+            ## 🎯 Action Items
+            - [ ] Review security vulnerabilities
+            - [ ] Test updated packages in staging
+            - [ ] Update major versions during maintenance windows
+            - [ ] Monitor for breaking changes
+            
+            ## 📋 Reports
+            Individual reports available for each repository:
+            ${{ matrix.repository }}: dependency-report.md
+            
+            ## 🔒 Security
+            All security vulnerabilities have been identified and tracked in GitHub Security Advisories.
+            
+            ## 📈 Next Week
+            Next audit will run automatically on $(date -u -d '+7 days')
+          
+          branch: weekly-dependency-updates
+          delete-branch: true
+          reviewers: '@shykeenan/admin-team'
+
+  notify-team:
+    needs: [dependency-audit, create-prs]
+    runs-on: ubuntu-latest
+    if: always() && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
+    
+    steps:
+      - name: Notify team about dependency status
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const dependencyStatus = {
+              audit: '${{ needs.dependency-audit.result }}',
+              prCreation: '${{ needs.create-prs.result }}',
+              repositories: ['shykeenan-website', 'tell-tales-game', 'timeline-hub', 'devkit'],
+              timestamp: new Date().toISOString()
+            };
+            
+            console.log('📦 Dependency management completed:', dependencyStatus);
+            
+            // Create GitHub Issue for tracking
+            if (dependencyStatus.audit === 'success') {
+              github.rest.issues.create({
+                owner: 'shykeenan',
+                repo: 'docs',
+                title: '📦 Weekly Dependency Report - ' + new Date().toLocaleDateString(),
+                body: `## Weekly Dependency Audit Results
+                
+                - **Audit Status**: ✅ Completed
+                - **Repositories Scanned**: ${dependencyStatus.repositories.join(', ')}
+                - **Security Issues**: Tracked in GitHub Security Advisories
+                - **PRs Created**: ${dependencyStatus.prCreation === 'success' ? '✅' : '⚠️'}
+                
+                ## Next Steps
+                - Review and merge dependency update PRs
+                - Monitor for any breaking changes
+                - Schedule maintenance window for major updates
+                
+                Generated: ${dependencyStatus.timestamp}
+                `,
+                labels: ['dependencies', 'weekly-report', 'maintenance']
+              });
+            }

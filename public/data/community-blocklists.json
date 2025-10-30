@@ -1,0 +1,168 @@
+{
+  "metadata": {
+    "version": "2025.01.01",
+    "generated": "2025-01-01T00:00:00Z",
+    "totalAccounts": 1247,
+    "lastUpdate": "2025-01-01T00:00:00Z",
+    "raggedyShieldVersion": "1.0.0"
+  },
+  "critical": {
+    "description": "Accounts with verified threats, doxxing, or critical harassment",
+    "severity": 4,
+    "accounts": [
+      {
+        "handle": "@threat_account_1",
+        "platform": "twitter",
+        "reason": "Death threats to survivors",
+        "verified": true,
+        "reportCount": 23,
+        "lastActivity": "2024-12-28T15:30:00Z"
+      },
+      {
+        "handle": "@harassment_user_2", 
+        "platform": "twitter",
+        "reason": "Doxxing survivors and witnesses",
+        "verified": true,
+        "reportCount": 18,
+        "lastActivity": "2024-12-30T09:45:00Z"
+      },
+      {
+        "handle": "@doxxer_account_3",
+        "platform": "multiple",
+        "reason": "Publishing private information",
+        "verified": true,
+        "reportCount": 31,
+        "lastActivity": "2024-12-29T20:15:00Z"
+      }
+    ]
+  },
+  "avp": {
+    "description": "Anti-Victim Prejudice accounts targeting survivors",
+    "severity": 3,
+    "accounts": [
+      {
+        "handle": "@victim_blamer_1",
+        "platform": "twitter",
+        "reason": "Consistent victim blaming patterns",
+        "verified": true,
+        "reportCount": 12,
+        "lastActivity": "2024-12-29T14:20:00Z",
+        "patterns": ["asked for it", "should have known better"]
+      },
+      {
+        "handle": "@gaslighter_account",
+        "platform": "instagram", 
+        "reason": "Gaslighting survivors, minimizing trauma",
+        "verified": true,
+        "reportCount": 8,
+        "lastActivity": "2024-12-27T11:30:00Z",
+        "patterns": ["you're being dramatic", "that never happened"]
+      },
+      {
+        "handle": "@survivor_harasser",
+        "platform": "tiktok",
+        "reason": "Harassing survivors sharing their stories",
+        "verified": true,
+        "reportCount": 15,
+        "lastActivity": "2024-12-30T16:45:00Z",
+        "patterns": ["attention seeking", "false allegation"]
+      }
+    ]
+  },
+  "spam": {
+    "description": "Spam, scam, and bot accounts",
+    "severity": 2,
+    "accounts": [
+      {
+        "handle": "@crypto_scammer_1",
+        "platform": "twitter",
+        "reason": "Cryptocurrency scam targeting vulnerable users",
+        "verified": true,
+        "reportCount": 45,
+        "lastActivity": "2024-12-30T18:00:00Z",
+        "scamType": "crypto"
+      },
+      {
+        "handle": "@fake_giveaway_bot",
+        "platform": "instagram",
+        "reason": "Fake giveaways to harvest personal data",
+        "verified": true,
+        "reportCount": 67,
+        "lastActivity": "2024-12-29T22:30:00Z",
+        "scamType": "phishing"
+      },
+      {
+        "handle": "@phishing_account",
+        "platform": "facebook",
+        "reason": "Phishing links targeting support groups",
+        "verified": true,
+        "reportCount": 29,
+        "lastActivity": "2024-12-28T13:15:00Z",
+        "scamType": "phishing"
+      }
+    ]
+  },
+  "watchlist": {
+    "description": "Accounts under investigation with multiple reports",
+    "severity": 1,
+    "accounts": [
+      {
+        "handle": "@suspicious_user_1",
+        "platform": "twitter",
+        "reason": "Multiple reports, under review",
+        "verified": false,
+        "reportCount": 3,
+        "lastActivity": "2024-12-30T12:00:00Z",
+        "status": "investigating"
+      },
+      {
+        "handle": "@potential_threat_2",
+        "platform": "reddit",
+        "reason": "Escalating behavior in survivor communities",
+        "verified": false,
+        "reportCount": 5,
+        "lastActivity": "2024-12-29T19:30:00Z",
+        "status": "monitoring"
+      }
+    ]
+  },
+  "patterns": {
+    "description": "Common attack patterns used by blocked accounts",
+    "avp_phrases": [
+      "asked for it",
+      "should have known better", 
+      "playing the victim",
+      "attention seeking",
+      "false allegation",
+      "money grab",
+      "where's the proof",
+      "why didn't you report it",
+      "you're being dramatic",
+      "that never happened",
+      "you're remembering it wrong",
+      "stop being so emotional"
+    ],
+    "threat_indicators": [
+      "i know where you live",
+      "i'll find you",
+      "you deserve to die",
+      "kill yourself",
+      "hope it happens again",
+      "should have been worse"
+    ],
+    "spam_markers": [
+      "free money fast",
+      "work from home",
+      "get rich quick", 
+      "limited time offer",
+      "act now urgent",
+      "click here buy now"
+    ]
+  },
+  "reporting": {
+    "instructions": "To report new accounts or appeal listings, contact: shield@raggedyplatform.org",
+    "verification_required": "All critical and AVP accounts require community verification before listing",
+    "appeal_process": "Appeals reviewed within 72 hours by community moderators",
+    "false_positive_policy": "False positives removed immediately upon verification"
+  }
+}

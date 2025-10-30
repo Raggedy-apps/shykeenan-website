@@ -1,0 +1,25 @@
+{
+  "name": "ShyKeenan.uk — Chrome DevTools App Config",
+  "description": "App-specific configuration to allow Chrome DevTools automation and MCP-based tooling against this origin during local development.",
+  "schemaVersion": 1,
+  "mcp": {
+    "features": [
+      "devtools",
+      "network",
+      "a11y",
+      "screenshot"
+    ],
+    "origins": [
+      "http://localhost:5173",
+      "http://127.0.0.1:5173"
+    ],
+    "pages": [
+      "/",
+      "/index.html",
+      "/data/migrated-posts.json",
+      "/data/timeline-events.json",
+      "/data/chronology.json"
+    ]
+  },
+  "createdAt": "2025-10-30T00:00:00.000Z"
+}

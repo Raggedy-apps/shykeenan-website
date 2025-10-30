@@ -1,0 +1,41 @@
+[
+  {
+    "id": "gen-1",
+    "title": "Remembering the Phoenix",
+    "slug": "remembering-the-phoenix",
+    "date": "2015-06-01",
+    "author": "Shy Keenan",
+    "excerpt": "A reflective piece paired with archival images exploring resilience and recovery.",
+    "featured": "/media-library/2015/06/shy.jpg",
+    "images": [
+      "/media-library/2015/06/shy.jpg",
+      "/media-library/2015/06/bwmelong.jpg"
+    ]
+  },
+  {
+    "id": "gen-2",
+    "title": "Campaign Moments",
+    "slug": "campaign-moments",
+    "date": "2016-07-10",
+    "author": "Shy Keenan",
+    "excerpt": "Standout moments and media from public campaigns and appearances.",
+    "featured": "/media-library/2016/07/Sara-Payne-A-Mothers-Story.jpg",
+    "images": [
+      "/media-library/2016/07/Sara-Payne-A-Mothers-Story.jpg",
+      "/media-library/2016/12/gameplan1.jpg"
+    ]
+  },
+  {
+    "id": "gen-3",
+    "title": "Archive Snapshot",
+    "slug": "archive-snapshot",
+    "date": "2014-09-05",
+    "author": "Shy Keenan",
+    "excerpt": "Photographs from early press and events, curated for context.",
+    "featured": "/media-library/2014/09/wttw.jpg",
+    "images": [
+      "/media-library/2014/09/wttw.jpg",
+      "/media-library/2014/09/huff2.png"
+    ]
+  }
+]

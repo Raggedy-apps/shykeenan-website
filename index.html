@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Shykeenan Rebirth - Community Defense & Survivor Protection</title>
+
+    <!-- Enhanced Security Headers -->
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self';
+               script-src 'self' https://plausible.io https://cdn.usefathom.com;
+               style-src 'self' 'unsafe-inline';
+               img-src 'self' data: https:;
+               font-src 'self';
+               connect-src 'self' https://plausible.io https://cdn.usefathom.com https://api.shykeenan.uk;
+               frame-ancestors 'none';
+               base-uri 'self';
+               form-action 'self';
+               upgrade-insecure-requests;
+               object-src 'none';
+               require-trusted-types-for 'script';"
+    />
+    <meta http-equiv="X-Frame-Options" content="DENY" />
+    <meta http-equiv="X-Content-Type-Options" content="nosniff" />
+    <meta http-equiv="X-XSS-Protection" content="1; mode=block" />
+    <meta http-equiv="Strict-Transport-Security" content="max-age=31536000; includeSubDomains" />
+    <meta name="referrer" content="strict-origin-when-cross-origin" />
+
+    <link rel="manifest" href="/manifest.json" />
+    <!-- <link rel="stylesheet" href="/styles/index.css" />
+    <link rel="stylesheet" href="/styles/neon.css" /> -->
+  </head>
+  <body>
+    <div id="app">
+      <!-- React app will mount here -->
+      <div class="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center">
+        <div class="text-center">
+          <div class="loading-spinner mb-4"></div>
+          <p class="text-white">Loading Shykeenan Rebirth...</p>
+        </div>
+      </div>
+    </div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>

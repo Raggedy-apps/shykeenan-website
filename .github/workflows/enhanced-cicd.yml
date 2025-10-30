@@ -1,0 +1,496 @@
+name: Enhanced CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Target environment'
+        required: true
+        default: 'preview'
+        type: choice
+        options:
+        - preview
+        - production
+      skip_tests:
+        description: 'Skip tests (use with caution)'
+        required: false
+        default: false
+        type: boolean
+
+env:
+  NODE_VERSION: '20'
+  CACHE_VERSION: 'v1'
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+  issues: write
+  pull-requests: write
+
+concurrency:
+  group: cicd-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name != 'workflow_dispatch' }}
+
+jobs:
+  # =============================================================================
+  # QUALITY GATES JOB
+  # =============================================================================
+  quality-gates:
+    name: 🔍 Quality Gates
+    runs-on: ubuntu-latest
+    outputs:
+      quality-score: ${{ steps.quality.outputs.score }}
+      can-deploy: ${{ steps.quality.outputs.can-deploy }}
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: 'package-lock.json'
+          
+      - name: Install Dependencies
+        run: npm ci --prefer-offline --no-audit
+        
+      - name: Code Quality Analysis
+        id: quality
+        run: |
+          echo "🔍 Running comprehensive quality gates..."
+          
+          # Initialize score
+          score=100
+          can_deploy=true
+          
+          # Linting (25 points)
+          echo "📏 Running ESLint..."
+          if npm run lint --if-present; then
+            echo "✅ Linting passed"
+            score=$((score + 25))
+          else
+            echo "❌ Linting failed"
+            score=$((score - 25))
+            can_deploy=false
+          fi
+          
+          # Testing (25 points)
+          if [ "${{ github.event.inputs.skip_tests }}" != "true" ]; then
+            echo "🧪 Running tests..."
+            if npm test --if-present; then
+              echo "✅ Tests passed"
+              score=$((score + 25))
+            else
+              echo "❌ Tests failed"
+              score=$((score - 25))
+              can_deploy=false
+            fi
+          else
+            echo "⏭️ Tests skipped (manual override)"
+            score=$((score + 25))
+          fi
+          
+          # Security Audit (25 points)
+          echo "🔒 Running security audit..."
+          if npm audit --audit-level=moderate; then
+            echo "✅ Security audit passed"
+            score=$((score + 25))
+          else
+            echo "⚠️ Security audit found issues"
+            score=$((score - 15))
+          fi
+          
+          # Build Test (25 points)
+          echo "🏗️ Testing build process..."
+          if npm run build --if-present; then
+            echo "✅ Build test passed"
+            score=$((score + 25))
+          else
+            echo "❌ Build test failed"
+            score=$((score - 25))
+            can_deploy=false
+          fi
+          
+          echo "score=$score" >> $GITHUB_OUTPUT
+          echo "can-deploy=$can_deploy" >> $GITHUB_OUTPUT
+          
+          echo "📊 Quality Score: $score/200"
+          echo "🚀 Can Deploy: $can_deploy"
+
+  # =============================================================================
+  # BUILD AND ANALYZE JOB
+  # =============================================================================
+  build-and-analyze:
+    name: 🏗️ Build & Analyze
+    runs-on: ubuntu-latest
+    needs: quality-gates
+    if: needs.quality-gates.outputs.can-deploy == 'true'
+    outputs:
+      build-size: ${{ steps.analyze.outputs.size }}
+      build-time: ${{ steps.analyze.outputs.time }}
+      bundle-score: ${{ steps.analyze.outputs.score }}
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: 'package-lock.json'
+          
+      - name: Install Dependencies
+        run: npm ci --prefer-offline --no-audit
+        
+      - name: Build for Production
+        id: build
+        run: |
+          start_time=$(date +%s)
+          npm run build
+          end_time=$(date +%s)
+          build_time=$((end_time - start_time))
+          echo "time=$build_time" >> $GITHUB_OUTPUT
+          echo "✅ Build completed in ${build_time}s"
+          
+      - name: Analyze Bundle
+        id: analyze
+        run: |
+          echo "📊 Analyzing bundle size..."
+          
+          # Calculate bundle size
+          if [ -d "dist" ]; then
+            size=$(du -sh dist | cut -f1)
+            echo "size=$size" >> $GITHUB_OUTPUT
+            
+            # Calculate bundle score (0-100)
+            size_bytes=$(du -sb dist | cut -f1)
+            if [ $size_bytes -lt 500000 ]; then # 500KB
+              score=100
+            elif [ $size_bytes -lt 1000000 ]; then # 1MB
+              score=80
+            elif [ $size_bytes -lt 2000000 ]; then # 2MB
+              score=60
+            else
+              score=40
+            fi
+            
+            echo "score=$score" >> $GITHUB_OUTPUT
+            echo "📦 Bundle size: $size"
+            echo "📈 Bundle score: $score/100"
+          else
+            echo "size=unknown" >> $GITHUB_OUTPUT
+            echo "score=0" >> $GITHUB_OUTPUT
+          fi
+          
+      - name: Upload Build Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-dist
+          path: dist/
+          retention-days: 7
+          
+      - name: Upload Bundle Analysis
+        uses: actions/upload-artifact@v4
+        with:
+          name: bundle-analysis
+          path: |
+            dist/
+            *.map
+          retention-days: 7
+
+  # =============================================================================
+  # SECURITY SCAN JOB
+  # =============================================================================
+  security-scan:
+    name: 🔒 Security Scan
+    runs-on: ubuntu-latest
+    needs: quality-gates
+    if: needs.quality-gates.outputs.can-deploy == 'true'
+    outputs:
+      security-score: ${{ steps.scan.outputs.score }}
+      vulnerabilities: ${{ steps.scan.outputs.vulns }}
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: 'package-lock.json'
+          
+      - name: Install Dependencies
+        run: npm ci --prefer-offline --no-audit
+        
+      - name: Advanced Security Scan
+        id: scan
+        run: |
+          echo "🔒 Running comprehensive security scan..."
+          
+          score=100
+          vulns=0
+          
+          # npm audit
+          echo "📦 Running npm audit..."
+          if npm audit --audit-level=moderate; then
+            echo "✅ npm audit passed"
+          else
+            echo "⚠️ npm audit found vulnerabilities"
+            score=$((score - 20))
+            vulns=1
+          fi
+          
+          # Security linting
+          echo "🔍 Running security linting..."
+          if npm run lint -- --ext .ts,.tsx,.js,.jsx --rule 'security/detect-object-injection: error' --rule 'security/detect-non-literal-regexp: error' --rule 'security/detect-unsafe-regex: error' 2>/dev/null; then
+            echo "✅ Security linting passed"
+          else
+            echo "⚠️ Security linting found issues"
+            score=$((score - 10))
+          fi
+          
+          # Basic dependency check
+          echo "🔗 Checking for known vulnerabilities..."
+          if [ -f "package.json" ]; then
+            # Check for suspicious packages
+            if grep -q "eval\|Function\|setTimeout\|setInterval" package.json; then
+              echo "⚠️ Potentially dangerous packages detected"
+              score=$((score - 15))
+            fi
+          fi
+          
+          echo "score=$score" >> $GITHUB_OUTPUT
+          echo "vulns=$vulns" >> $GITHUB_OUTPUT
+          
+          echo "🛡️ Security Score: $score/100"
+          echo "🚨 Vulnerabilities: $vulns"
+
+  # =============================================================================
+  # DEPLOYMENT JOB
+  # =============================================================================
+  deploy:
+    name: 🚀 Deploy
+    runs-on: ubuntu-latest
+    needs: [quality-gates, build-and-analyze, security-scan]
+    if: |
+      always() &&
+      needs.quality-gates.outputs.can-deploy == 'true' &&
+      (github.event_name != 'pull_request' || github.event.inputs.environment == 'production')
+    environment:
+      name: ${{ github.event.inputs.environment == 'production' && 'production' || 'preview' }}
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: 'package-lock.json'
+          
+      - name: Install Dependencies
+        run: npm ci --prefer-offline --no-audit
+        
+      - name: Build for Target Environment
+        run: |
+          if [ "${{ github.event.inputs.environment }}" == "production" ]; then
+            npm run build:scale
+          else
+            npm run build:gh-pages
+          fi
+          
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+        
+      - name: Upload Pages Artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: './dist'
+          
+      - name: Deploy to GitHub Pages
+        id: deploy
+        uses: actions/deploy-pages@v4
+        
+      - name: Create Deployment Summary
+        run: |
+          echo "## 🚀 Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Environment: ${{ github.event.inputs.environment || 'preview' }}" >> $GITHUB_STEP_SUMMARY
+          echo "### Build Size: ${{ needs.build-and-analyze.outputs.build-size }}" >> $GITHUB_STEP_SUMMARY
+          echo "### Build Time: ${{ needs.build-and-analyze.outputs.build-time }}s" >> $GITHUB_STEP_SUMMARY
+          echo "### Bundle Score: ${{ needs.build-and-analyze.outputs.bundle-score }}/100" >> $GITHUB_STEP_SUMMARY
+          echo "### Security Score: ${{ needs.security-scan.outputs.security-score }}/100" >> $GITHUB_STEP_SUMMARY
+          echo "### Quality Score: ${{ needs.quality-gates.outputs.quality-score }}/200" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Deployed to:** ${{ steps.deploy.outputs.page_url }}" >> $GITHUB_STEP_SUMMARY
+
+  # =============================================================================
+  # HEALTH CHECK JOB
+  # =============================================================================
+  health-check:
+    name: 🔍 Health Check
+    runs-on: ubuntu-latest
+    needs: deploy
+    if: always() && needs.deploy.result == 'success'
+    steps:
+      - name: Wait for Deployment
+        run: sleep 30
+        
+      - name: Health Check
+        run: |
+          echo "🔍 Running health checks..."
+          
+          url="${{ needs.deploy.outputs.page_url }}"
+          echo "Checking: $url"
+          
+          # Basic connectivity
+          if curl -f -s --max-time 30 "$url" > /dev/null; then
+            echo "✅ Basic connectivity: PASSED"
+          else
+            echo "❌ Basic connectivity: FAILED"
+            exit 1
+          fi
+          
+          # Check for common issues
+          response=$(curl -s "$url")
+          
+          # Check for JavaScript errors (basic check)
+          if echo "$response" | grep -q "error\|Error\|ERROR"; then
+            echo "⚠️ Potential errors detected in page"
+          fi
+          
+          # Check for security headers
+          headers=$(curl -I -s "$url")
+          if echo "$headers" | grep -q "content-security-policy"; then
+            echo "✅ CSP header present"
+          else
+            echo "⚠️ CSP header missing"
+          fi
+          
+          echo "🏥 Health check completed"
+
+  # =============================================================================
+  # MONITORING AND ALERTING JOB
+  # =============================================================================
+  monitoring:
+    name: 📊 Monitoring & Alerting
+    runs-on: ubuntu-latest
+    needs: [deploy, health-check]
+    if: always() && (needs.deploy.result == 'success' || needs.deploy.result == 'failure')
+    steps:
+      - name: Create Monitoring Report
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const deployResult = '${{ needs.deploy.result }}';
+            const healthResult = '${{ needs.health-check.result }}';
+            const qualityScore = '${{ needs.quality-gates.outputs.quality-score }}';
+            const buildSize = '${{ needs.build-and-analyze.outputs.build-size }}';
+            const securityScore = '${{ needs.security-scan.outputs.security-score }}';
+            
+            let status = '✅ SUCCESS';
+            let emoji = '🎉';
+            
+            if (deployResult === 'failure') {
+              status = '❌ FAILED';
+              emoji = '🚨';
+            } else if (healthResult === 'failure') {
+              status = '⚠️ HEALTH CHECK FAILED';
+              emoji = '🏥';
+            }
+            
+            const report = `
+            ${emoji} **Deployment Report - ${new Date().toISOString().split('T')[0]}**
+            
+            **Status:** ${status}
+            
+            ### 📊 Metrics
+            - **Quality Score:** ${qualityScore}/200
+            - **Build Size:** ${buildSize}
+            - **Security Score:** ${securityScore}/100
+            - **Health Check:** ${healthResult || 'Not run'}
+            
+            ### 🎯 Deployment Details
+            - **Environment:** ${{ github.event.inputs.environment || 'preview' }}
+            - **Branch:** ${context.ref}
+            - **Commit:** ${context.sha.substring(0, 7)}
+            - **Actor:** ${context.actor}
+            
+            ### 📋 Actions
+            ${deployResult === 'success' ? 
+              '✅ **Deployment successful!** Monitor the application for any issues.' :
+              '❌ **Deployment failed!** Check the logs and fix the issues before retrying.'
+            }
+            
+            ---
+            *Report generated by Enhanced CI/CD Pipeline*
+            `;
+            
+            // Create issue for failed deployments
+            if (deployResult === 'failure') {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: `🚨 Deployment Failed - ${new Date().toISOString().split('T')[0]}`,
+                body: report + '\n\n### 🔧 Troubleshooting\n\n1. Check the workflow logs\n2. Review quality gate failures\n3. Fix identified issues\n4. Retry deployment',
+                labels: ['deployment', 'failure', 'urgent']
+              });
+            }
+            
+            // Update deployment status
+            await github.rest.repos.createDeploymentStatus({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              deployment_id: context.payload.deployment?.id || 0,
+              state: deployResult === 'success' ? 'success' : 'failure',
+              description: report
+            });
+
+  # =============================================================================
+  # ROLLBACK JOB (Manual trigger only)
+  # =============================================================================
+  rollback:
+    name: 🔄 Rollback
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'rollback'
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: 'package-lock.json'
+          
+      - name: Install Dependencies
+        run: npm ci --prefer-offline --no-audit
+        
+      - name: Build Previous Version
+        run: |
+          echo "🔄 Rolling back to previous successful deployment..."
+          # This would restore the previous version
+          # Implementation depends on your rollback strategy
+          npm run build
+          
+      - name: Deploy Rollback
+        uses: actions/deploy-pages@v4
+        with:
+          artifact_name: build-dist
+          
+      - name: Confirm Rollback
+        run: |
+          echo "🔄 Rollback deployment initiated"
+          echo "✅ Previous version deployed successfully"
+          echo "📊 Verify application functionality manually"

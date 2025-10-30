@@ -1,0 +1,29 @@
+[
+  {
+    "title": "Home",
+    "href": "/index.html"
+  },
+  {
+    "title": "About",
+    "href": "/about.html"
+  },
+  {
+    "title": "Shield",
+    "href": "/shield.html",
+    "icon": "🛡️",
+    "description": "Community Defense Platform"
+  },
+  {
+    "title": "Memories",
+    "href": "/memories.html"
+  },
+  {
+    "title": "Phoenix Sanctuary",
+    "href": "/phoenix/"
+  },
+  {
+    "title": "Contact",
+    "href": "/contact.html"
+  }
+]
+

@@ -1,0 +1,62 @@
+[
+  {
+    "id": "shy-keenan",
+    "title": "Shy Keenan",
+    "slug": "shy-keenan",
+    "date": "2017-06-30",
+    "excerpt": "Hello you :0) I really want us to start off on the right foot, so here's a little bit more about me, before you just go right ahead and fall madly 'in like' with me.",
+    "author": "Shy Keenan",
+    "published": true,
+    "featured_image": "/media-library/2017/06/small.jpg",
+    "category": "About",
+    "tags": ["biography", "advocate", "survivor"]
+  },
+  {
+    "id": "phoenix-kitchen",
+    "title": "Phoenix Kitchen",
+    "slug": "phoenix-kitchen",
+    "date": "2017-06-28",
+    "excerpt": "The Phoenix Working Playscale Kitchen - a creative CPTS management tool and artistic project.",
+    "author": "Shy Keenan",
+    "published": true,
+    "featured_image": "/media-library/phoenix-kitchen.jpg",
+    "category": "Projects",
+    "tags": ["CPTS", "art", "healing"]
+  },
+  {
+    "id": "hg-arvr-app",
+    "title": "H&G AR/VR App/Game",
+    "slug": "hg-arvr-app",
+    "date": "2016-12-17",
+    "excerpt": "The House & Garden AR/VR App/Game is a management tool made for & by those who manage Civilian Post Traumatic Stress.",
+    "author": "Shy Keenan",
+    "published": true,
+    "featured_image": "/media-library/hg-arvr.jpg",
+    "category": "Projects",
+    "tags": ["CPTS", "technology", "VR", "AR"]
+  },
+  {
+    "id": "phoenix-post",
+    "title": "The Phoenix Post",
+    "slug": "phoenix-post",
+    "date": "2016-05-14",
+    "excerpt": "Sara and I retired as advocates in 2017, we continue to work voluntarily for The Phoenix Post (registered Not For Profit).",
+    "author": "Shy Keenan",
+    "published": true,
+    "featured_image": "/media-library/phoenix-post.jpg",
+    "category": "Advocacy",
+    "tags": ["advocacy", "phoenix post", "nonprofit"]
+  },
+  {
+    "id": "love-is-love",
+    "title": "Love Is Love",
+    "slug": "love-is-love",
+    "date": "2015-06-24",
+    "excerpt": "I feel I was blessed to become the parent of LGBTQ twins, the core centre of an unspeakable joy that came into my life when they did.",
+    "author": "Shy Keenan",
+    "published": true,
+    "featured_image": "/media-library/love-is-love.jpg",
+    "category": "Personal",
+    "tags": ["LGBTQ", "family", "love"]
+  }
+]
