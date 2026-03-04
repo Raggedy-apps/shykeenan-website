@@ -1,6 +1,6 @@
 // dataApi.js — provides canonical data for MemoriesPage and AdminPage
-import timelineEvents from '../../data/timeline-events.json';
-import migratedPosts from '../../data/migrated-posts.json';
+import timelineEvents from '../../public/data/timeline-events.json';
+import migratedPosts from '../../public/data/migrated-posts.json';
 
 export function getTimeline() {
   // Combine timeline events with migrated posts for a more complete timeline
