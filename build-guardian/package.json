@@ -1,0 +1,9 @@
+{
+  "name": "@shykeenan/build-guardian",
+  "version": "1.0.0",
+  "type": "module",
+  "bin": {
+    "audit-deps": "bin/audit-deps.js",
+    "security-gate": "bin/security-gate.js"
+  }
+}
